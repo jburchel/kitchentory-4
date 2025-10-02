@@ -21,7 +21,10 @@
       "Read(//Users/macbookair/**)",
       "Bash(npx tsc:*)",
       "Bash(npm test:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Complete Kitchentory MVP foundation with mobile app and testing\n\n## Features Implemented\n\n### Mobile App (React Native)\n- Authentication flow (login/register) with JWT token persistence\n- Inventory management (CRUD, expiring items alerts)\n- Recipe discovery (list, filter by available ingredients, detail view)\n- Shopping lists (list, detail, check-off functionality)\n- shadcn-inspired UI components with NativeWind/Tailwind CSS\n- Redux state management with AsyncStorage\n- Pull-to-refresh and loading states throughout\n\n### API (NestJS)\n- Complete REST API with 31 endpoints\n- Authentication module with JWT and Supabase Auth\n- Products, Inventory, Recipes, Shopping modules\n- Full CRUD operations for all entities\n- Business logic: expiring items, available recipes, auto shopping lists\n\n### Database (Supabase/PostgreSQL)\n- 14-table schema with proper relationships\n- Row Level Security (RLS) policies\n- Custom types for enums\n- Indexes and performance optimization\n\n### Testing Infrastructure\n- Jest configuration\n- Auth service: 7/7 unit tests passing ✅\n- Inventory service: 6/9 unit tests passing\n- Recipes service: test structure created\n- 14/17 tests passing (82% pass rate)\n\n### Infrastructure\n- Monorepo structure with npm workspaces\n- Shared TypeScript types package\n- Environment configuration (.env.example files)\n- Comprehensive README documentation\n- CI/CD pipeline configuration\n\n## Progress\n- Overall: 82% Complete\n- Mobile App: 100%\n- API Foundation: 100%\n- Testing: 30%\n- 66/80 story points completed\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
