@@ -1,0 +1,18 @@
+{
+  "name": "@kitchentory/shared",
+  "version": "1.0.0",
+  "description": "Shared types and utilities for Kitchentory",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "keywords": ["kitchentory", "types"],
+  "author": "Kitchentory Team",
+  "license": "MIT"
+}

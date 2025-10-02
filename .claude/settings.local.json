@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+      "Bash(.specify/scripts/bash/setup-plan.sh:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(tree:*)",
+      "Bash(npx react-native:*)",
+      "Bash(npx @react-native-community/cli:*)",
+      "Read(//Users/macbookair/dev/**)",
+      "Bash(/bashes)",
+      "Bash(brew install:*)",
+      "Bash(supabase start:*)",
+      "Bash(supabase:*)",
+      "Bash(claude --version)",
+      "Bash(npm update:*)",
+      "Bash(npx tailwindcss:*)",
+      "Read(//Users/macbookair/**)",
+      "Bash(npx tsc:*)",
+      "Bash(npm test:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

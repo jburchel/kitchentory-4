@@ -1,0 +1,725 @@
+openapi: 3.0.0
+info:
+  title: Kitchentory API
+  description: Kitchen inventory management system API
+  version: 1.0.0
+servers:
+  - url: https://api.kitchentory.com/v1
+    description: Production server
+  - url: http://localhost:3000/v1
+    description: Development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        subscription_tier:
+          type: string
+          enum: [free, pro, premium]
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        location:
+          type: string
+          enum: [pantry, fridge, freezer, counter, cabinet, other]
+        expiration_date:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        brand:
+          type: string
+        category:
+          type: string
+        barcode:
+          type: string
+        image_url:
+          type: string
+          format: uri
+
+    Recipe:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        prep_time_minutes:
+          type: integer
+        cook_time_minutes:
+          type: integer
+        servings:
+          type: integer
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeIngredient'
+        instructions:
+          type: array
+          items:
+            type: object
+            properties:
+              step:
+                type: integer
+              instruction:
+                type: string
+        dietary_tags:
+          type: array
+          items:
+            type: string
+
+    RecipeIngredient:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        optional:
+          type: boolean
+
+    ShoppingList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShoppingListItem'
+        created_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+
+    ShoppingListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        category:
+          type: string
+        checked:
+          type: boolean
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - username
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 30
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+        '400':
+          description: Invalid input
+        '409':
+          description: Email already exists
+
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+        '401':
+          description: Invalid credentials
+
+  /inventory:
+    get:
+      summary: Get household inventory
+      tags: [Inventory]
+      parameters:
+        - name: location
+          in: query
+          schema:
+            type: string
+            enum: [pantry, fridge, freezer, counter, cabinet, other]
+        - name: expiring_soon
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Inventory items retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InventoryItem'
+
+    post:
+      summary: Add item to inventory
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - product_id
+                - quantity
+                - unit
+                - location
+              properties:
+                product_id:
+                  type: string
+                  format: uuid
+                quantity:
+                  type: number
+                  minimum: 0
+                unit:
+                  type: string
+                location:
+                  type: string
+                  enum: [pantry, fridge, freezer, counter, cabinet, other]
+                expiration_date:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Item added to inventory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryItem'
+        '400':
+          description: Invalid input
+
+  /inventory/{id}:
+    put:
+      summary: Update inventory item
+      tags: [Inventory]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity:
+                  type: number
+                  minimum: 0
+                location:
+                  type: string
+                expiration_date:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryItem'
+        '404':
+          description: Item not found
+
+    delete:
+      summary: Remove item from inventory
+      tags: [Inventory]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item removed
+        '404':
+          description: Item not found
+
+  /products/barcode/{barcode}:
+    get:
+      summary: Get product by barcode
+      tags: [Products]
+      parameters:
+        - name: barcode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+
+  /products/search:
+    get:
+      summary: Search products
+      tags: [Products]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /recipes:
+    get:
+      summary: Get recipes
+      tags: [Recipes]
+      parameters:
+        - name: available_only
+          in: query
+          schema:
+            type: boolean
+          description: Only show recipes with available ingredients
+        - name: dietary_tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Recipes retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recipe'
+
+    post:
+      summary: Save new recipe
+      tags: [Recipes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recipe'
+      responses:
+        '201':
+          description: Recipe saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          description: Invalid recipe data
+
+  /recipes/import:
+    post:
+      summary: Import recipe from URL
+      tags: [Recipes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+      responses:
+        '201':
+          description: Recipe imported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          description: Unable to parse recipe
+
+  /meal-plans:
+    get:
+      summary: Get meal plans
+      tags: [Meal Planning]
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Meal plans retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    start_date:
+                      type: string
+                      format: date
+                    end_date:
+                      type: string
+                      format: date
+                    meals:
+                      type: array
+                      items:
+                        type: object
+
+    post:
+      summary: Generate meal plan
+      tags: [Meal Planning]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - start_date
+                - days
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                days:
+                  type: integer
+                  minimum: 1
+                  maximum: 14
+                preferences:
+                  type: object
+                  properties:
+                    use_inventory_first:
+                      type: boolean
+                    dietary_restrictions:
+                      type: array
+                      items:
+                        type: string
+      responses:
+        '201':
+          description: Meal plan generated
+
+  /shopping-lists:
+    get:
+      summary: Get shopping lists
+      tags: [Shopping]
+      parameters:
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Shopping lists retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShoppingList'
+
+    post:
+      summary: Create shopping list
+      tags: [Shopping]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                from_meal_plan:
+                  type: boolean
+                auto_generate:
+                  type: boolean
+      responses:
+        '201':
+          description: Shopping list created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingList'
+
+  /shopping-lists/{id}/items:
+    post:
+      summary: Add item to shopping list
+      tags: [Shopping]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - quantity
+                - unit
+              properties:
+                product_id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                quantity:
+                  type: number
+                unit:
+                  type: string
+      responses:
+        '201':
+          description: Item added
+        '404':
+          description: Shopping list not found
+
+  /shopping-lists/{id}/items/{item_id}:
+    patch:
+      summary: Check/uncheck item
+      tags: [Shopping]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - checked
+              properties:
+                checked:
+                  type: boolean
+      responses:
+        '200':
+          description: Item updated
+        '404':
+          description: Item not found
+
+  /receipts/scan:
+    post:
+      summary: Upload and scan receipt
+      tags: [Receipts]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                store_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Receipt processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  receipt_id:
+                    type: string
+                    format: uuid
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        quantity:
+                          type: number
+                        price:
+                          type: number
+                        confidence:
+                          type: number
+        '400':
+          description: Unable to process receipt
+        '402':
+          description: Subscription limit reached
