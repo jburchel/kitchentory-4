@@ -4,25 +4,26 @@ import { SupabaseService } from '../supabase/supabase.service';
 
 describe('RecipesService', () => {
   let service: RecipesService;
-
-  const mockSupabaseClient = {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    insert: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    ilike: jest.fn().mockReturnThis(),
-    contains: jest.fn().mockReturnThis(),
-    order: jest.fn(),
-    single: jest.fn(),
-  };
+  let mockSupabaseClient: any;
 
   const mockSupabaseService = {
-    getClient: jest.fn(() => mockSupabaseClient),
+    getClient: jest.fn(),
   };
 
   beforeEach(async () => {
+    // Create a thenable mock that supports both method chaining and promise resolution
+    mockSupabaseClient = {
+      then: jest.fn((resolve) => resolve({ data: null, error: null })),
+    };
+
+    const methods = ['from', 'select', 'insert', 'update', 'delete', 'eq', 'or', 'ilike', 'contains', 'range', 'order', 'single'];
+
+    methods.forEach((method) => {
+      mockSupabaseClient[method] = jest.fn(() => mockSupabaseClient);
+    });
+
+    mockSupabaseService.getClient.mockReturnValue(mockSupabaseClient);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RecipesService,
@@ -70,10 +71,12 @@ describe('RecipesService', () => {
         updated_at: new Date().toISOString(),
       };
 
-      mockSupabaseClient.single.mockResolvedValue({
-        data: mockCreatedRecipe,
-        error: null,
-      });
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          data: mockCreatedRecipe,
+          error: null,
+        })
+      );
 
       const result = await service.create(userId, createDto);
 
@@ -91,10 +94,12 @@ describe('RecipesService', () => {
         ingredients: [],
       };
 
-      mockSupabaseClient.single.mockResolvedValue({
-        data: null,
-        error: { message: 'Creation failed' },
-      });
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          data: null,
+          error: { message: 'Creation failed' },
+        })
+      );
 
       await expect(service.create(userId, createDto)).rejects.toThrow('Creation failed');
     });
@@ -117,10 +122,12 @@ describe('RecipesService', () => {
         },
       ];
 
-      mockSupabaseClient.order.mockResolvedValue({
-        data: mockRecipes,
-        error: null,
-      });
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          data: mockRecipes,
+          error: null,
+        })
+      );
 
       const result = await service.findAll('user-123', {});
 
@@ -131,10 +138,12 @@ describe('RecipesService', () => {
     it('should filter by cuisine', async () => {
       const cuisine = 'italian';
 
-      mockSupabaseClient.order.mockResolvedValue({
-        data: [],
-        error: null,
-      });
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          data: [],
+          error: null,
+        })
+      );
 
       await service.findAll('user-123', { cuisine });
 
@@ -149,29 +158,48 @@ describe('RecipesService', () => {
         id: recipeId,
         name: 'Test Recipe',
         servings: 4,
-        ingredients: [
-          { id: 'ing-1', name: 'Pasta', quantity: 200, unit: 'g' },
-        ],
       };
+      const mockIngredients = [
+        { id: 'ing-1', name: 'Pasta', quantity: 200, unit: 'g' },
+      ];
 
-      mockSupabaseClient.single.mockResolvedValue({
-        data: mockRecipe,
-        error: null,
+      // Mock needs to handle two queries: recipe, then ingredients
+      let callCount = 0;
+      mockSupabaseClient.then.mockImplementation((resolve) => {
+        callCount++;
+        if (callCount === 1) {
+          // First call - recipe query
+          return resolve({
+            data: mockRecipe,
+            error: null,
+          });
+        } else {
+          // Second call - ingredients query
+          return resolve({
+            data: mockIngredients,
+            error: null,
+          });
+        }
       });
 
       const result = await service.findOne('user-123', recipeId);
 
-      expect(result).toEqual(mockRecipe);
+      expect(result).toEqual({
+        ...mockRecipe,
+        ingredients: mockIngredients,
+      });
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('recipes');
     });
 
     it('should throw error for non-existent recipe', async () => {
       const recipeId = 'non-existent';
 
-      mockSupabaseClient.single.mockResolvedValue({
-        data: null,
-        error: { message: 'Recipe not found' },
-      });
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          data: null,
+          error: { message: 'Recipe not found' },
+        })
+      );
 
       await expect(service.findOne('user-123', recipeId)).rejects.toThrow();
     });
@@ -181,19 +209,21 @@ describe('RecipesService', () => {
     it('should return recipes that can be made with available inventory', async () => {
       const userId = 'user-123';
 
-      // Mock the order method which is the final call in the chain
-      mockSupabaseClient.order.mockResolvedValue({
-        data: [
-          {
-            id: 'recipe-1',
-            name: 'Available Recipe',
-            ingredients: [
-              { product_id: 'product-1', quantity: 200, is_optional: false },
-            ],
-          },
-        ],
-        error: null,
-      });
+      // Mock the promise resolution
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          data: [
+            {
+              id: 'recipe-1',
+              name: 'Available Recipe',
+              ingredients: [
+                { product_id: 'product-1', quantity: 200, is_optional: false },
+              ],
+            },
+          ],
+          error: null,
+        })
+      );
 
       const result = await service.findAvailable(userId, {});
 
@@ -219,10 +249,12 @@ describe('RecipesService', () => {
         created_by: userId,
       };
 
-      mockSupabaseClient.single.mockResolvedValue({
-        data: mockUpdatedRecipe,
-        error: null,
-      });
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          data: mockUpdatedRecipe,
+          error: null,
+        })
+      );
 
       const result = await service.update(userId, recipeId, updateDto);
 
@@ -236,9 +268,11 @@ describe('RecipesService', () => {
       const userId = 'user-123';
       const recipeId = 'recipe-123';
 
-      mockSupabaseClient.eq.mockResolvedValue({
-        error: null,
-      });
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          error: null,
+        })
+      );
 
       await service.remove(userId, recipeId);
 

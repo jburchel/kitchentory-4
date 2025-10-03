@@ -4,26 +4,26 @@ import { SupabaseService } from '../supabase/supabase.service';
 
 describe('InventoryService', () => {
   let service: InventoryService;
-
-  const mockSupabaseClient = {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    insert: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    lte: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    range: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
-    single: jest.fn(),
-  };
+  let mockSupabaseClient: any;
 
   const mockSupabaseService = {
-    getClient: jest.fn(() => mockSupabaseClient),
+    getClient: jest.fn(),
   };
 
   beforeEach(async () => {
+    // Create a thenable mock that supports both method chaining and promise resolution
+    mockSupabaseClient = {
+      then: jest.fn((resolve) => resolve({ data: null, error: null })),
+    };
+
+    const methods = ['from', 'select', 'insert', 'update', 'delete', 'eq', 'lt', 'lte', 'gte', 'range', 'order', 'single'];
+
+    methods.forEach((method) => {
+      mockSupabaseClient[method] = jest.fn(() => mockSupabaseClient);
+    });
+
+    mockSupabaseService.getClient.mockReturnValue(mockSupabaseClient);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InventoryService,
@@ -119,12 +119,14 @@ describe('InventoryService', () => {
         },
       ];
 
-      // Mock the final method in the chain (order)
-      mockSupabaseClient.order.mockResolvedValue({
-        data: mockItems,
-        error: null,
-        count: 1,
-      });
+      // Mock the promise resolution
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          data: mockItems,
+          error: null,
+          count: 1,
+        })
+      );
 
       const result = await service.findAll(userId, {});
 
@@ -205,9 +207,11 @@ describe('InventoryService', () => {
       const userId = 'user-123';
       const itemId = 'item-123';
 
-      mockSupabaseClient.eq.mockResolvedValue({
-        error: null,
-      });
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          error: null,
+        })
+      );
 
       await service.remove(userId, itemId);
 
@@ -232,11 +236,13 @@ describe('InventoryService', () => {
         },
       ];
 
-      // Mock the final method in the chain (order)
-      mockSupabaseClient.order.mockResolvedValue({
-        data: mockExpiringItems,
-        error: null,
-      });
+      // Mock the promise resolution
+      mockSupabaseClient.then.mockImplementation((resolve) =>
+        resolve({
+          data: mockExpiringItems,
+          error: null,
+        })
+      );
 
       const result = await service.getExpiringItems(userId, days);
 
