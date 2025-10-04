@@ -1,5 +1,5 @@
 -- Create custom types
-CREATE TYPE subscription_tier AS ENUM ('free', 'premium', 'family');
+CREATE TYPE subscription_tier AS ENUM ('free', 'pro', 'premium');
 CREATE TYPE unit_type AS ENUM ('item', 'kg', 'g', 'l', 'ml', 'oz', 'lb', 'cup', 'tbsp', 'tsp');
 CREATE TYPE location_type AS ENUM ('fridge', 'freezer', 'pantry', 'spice_rack', 'other');
 CREATE TYPE dietary_restriction AS ENUM ('vegetarian', 'vegan', 'gluten_free', 'dairy_free', 'nut_free', 'kosher', 'halal', 'low_carb', 'keto', 'paleo');

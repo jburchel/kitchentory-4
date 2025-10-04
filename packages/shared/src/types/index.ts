@@ -1,5 +1,8 @@
 // Core Entity Types (from data-model.md)
 
+// Subscription Types
+export type SubscriptionTier = 'free' | 'pro' | 'premium';
+
 export interface User {
   id: string;
   email: string;
@@ -14,6 +17,8 @@ export interface User {
   timezone: string;
   locale: string;
   push_token?: string;
+  subscription_tier?: SubscriptionTier;
+  subscription_expires_at?: Date;
   deleted_at?: Date;
 }
 
@@ -184,7 +189,7 @@ export interface LoginResponse {
     id: string;
     email: string;
     username: string;
-    subscription_tier: string;
+    subscription_tier: SubscriptionTier;
   };
   token: string;
 }
