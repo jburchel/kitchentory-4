@@ -2,18 +2,18 @@
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.households ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.household_members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY; -- Table doesn't exist yet
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recipes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recipe_ingredients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shopping_lists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shopping_list_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.meal_plans ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.store_prices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.receipt_scans ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.barcode_scans ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.meal_plans ENABLE ROW LEVEL SECURITY; -- Table doesn't exist yet
+-- ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY; -- Table doesn't exist yet
+-- ALTER TABLE public.store_prices ENABLE ROW LEVEL SECURITY; -- Table doesn't exist yet
+-- ALTER TABLE public.receipt_scans ENABLE ROW LEVEL SECURITY; -- Table doesn't exist yet
+-- ALTER TABLE public.barcode_scans ENABLE ROW LEVEL SECURITY; -- Table doesn't exist yet
 
 -- Users policies
 CREATE POLICY "Users can view own profile" ON public.users

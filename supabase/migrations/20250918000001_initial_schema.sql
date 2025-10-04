@@ -4,6 +4,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Enable RLS
 ALTER DATABASE postgres SET row_security = on;
 
+-- Create subscription tier enum
+CREATE TYPE subscription_tier AS ENUM ('free', 'pro', 'premium');
+
 -- Users table (extends Supabase auth.users)
 CREATE TABLE public.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -18,6 +21,8 @@ CREATE TABLE public.users (
     timezone TEXT DEFAULT 'UTC',
     locale TEXT DEFAULT 'en',
     push_token TEXT,
+    subscription_tier subscription_tier DEFAULT 'free',
+    subscription_expires_at TIMESTAMP WITH TIME ZONE,
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
