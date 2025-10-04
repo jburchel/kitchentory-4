@@ -93,9 +93,9 @@ Connection string: postgresql://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:54
 
 ---
 
-## Part 2: API Deployment (Railway.app) - 20 minutes
+## Part 2: API Deployment (Render.com) - 20 minutes
 
-**Why Railway?** Free $5/month credit, easy deploys, great for Node.js apps.
+**Why Render?** Free tier available, easy deploys, great DX for Node.js apps, auto-deploy from GitHub.
 
 ### Step 2.1: Prepare API for Deployment
 
@@ -104,73 +104,89 @@ Connection string: postgresql://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:54
    cd apps/api
    ```
 
-2. **Create production config** (we'll add these to Railway):
+2. **Create production config** (we'll add these to Render):
    ```env
-   # You'll add these in Railway dashboard
+   # You'll add these in Render dashboard
    NODE_ENV=production
-   PORT=3001
+   PORT=10000
    SUPABASE_URL=https://xxxxx.supabase.co
    SUPABASE_ANON_KEY=eyJhbGc...
    SUPABASE_SERVICE_KEY=eyJhbGc...
    JWT_SECRET=your-super-secret-jwt-key-min-32-chars
    ```
 
-### Step 2.2: Deploy to Railway
+### Step 2.2: Deploy to Render
 
-1. **Go to [railway.app](https://railway.app)**
-   - Click "Start a New Project"
+1. **Go to [render.com](https://render.com)**
+   - Click "Get Started" or "Sign In"
    - Sign in with GitHub
 
-2. **Deploy from GitHub Repo**:
-   - Click "Deploy from GitHub repo"
-   - Authorize Railway to access your GitHub
-   - Select repository: `kitchentory-4`
-   - Railway will auto-detect the NestJS app
+2. **Create New Web Service**:
+   - Click "New +" → "Web Service"
+   - Click "Connect a repository"
+   - Find and select your `kitchentory-4` repository
+   - Click "Connect"
 
 3. **Configure the deployment**:
-   - Root Directory: `apps/api`
-   - Build Command: `npm install && npm run build`
-   - Start Command: `npm run start:prod`
-   - Click "Deploy"
+   ```
+   Name: kitchentory-api
+   Region: Oregon (US West) or closest to you
+   Branch: main (or your default branch)
+   Root Directory: apps/api
+   Runtime: Node
+   Build Command: npm install && npm run build
+   Start Command: npm run start:prod
+   Instance Type: Free
+   ```
+   - Click "Advanced" to set Root Directory
 
 4. **Add Environment Variables**:
-   - In Railway dashboard, go to "Variables" tab
-   - Add each variable from Step 2.1
-   - Click "Add Variable" for each one
+   - Scroll down to "Environment Variables"
+   - Click "Add Environment Variable" for each:
+     ```
+     NODE_ENV=production
+     PORT=10000
+     SUPABASE_URL=https://xxxxx.supabase.co
+     SUPABASE_ANON_KEY=eyJhbGc... (from Part 1)
+     SUPABASE_SERVICE_KEY=eyJhbGc... (from Part 1)
+     JWT_SECRET=generate-a-random-32-char-string
+     ```
 
-5. **Generate Domain**:
-   - Go to "Settings" tab
-   - Under "Domains", click "Generate Domain"
-   - You'll get: `kitchentory-api-production.up.railway.app`
+   > **Generate JWT_SECRET**: Run `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+
+5. **Deploy**:
+   - Click "Create Web Service"
+   - Render will build and deploy (takes 2-3 minutes)
+   - You'll get a URL like: `https://kitchentory-api.onrender.com`
    - **SAVE THIS URL** - your mobile app needs it!
 
 6. **Verify Deployment**:
    ```bash
    # Test the health endpoint
-   curl https://your-app.up.railway.app
+   curl https://kitchentory-api.onrender.com
    # Should return: "Hello World!"
 
    # Check all endpoints are live
-   curl https://your-app.up.railway.app/products
+   curl https://kitchentory-api.onrender.com/products
    # Should return: 401 (auth required) - this is good!
    ```
 
-### Alternative: Render.com (if Railway doesn't work)
+**Note**: Free tier spins down after 15 min of inactivity. First request may take 30s. Upgrade to $7/mo for always-on.
+
+### Alternative: Railway.app
 
 <details>
-<summary>Click to expand Render.com instructions</summary>
+<summary>Click to expand Railway instructions</summary>
 
-1. Go to [render.com](https://render.com)
-2. Click "New +" → "Web Service"
-3. Connect GitHub repository
-4. Settings:
-   - Name: kitchentory-api
-   - Root Directory: apps/api
+1. Go to [railway.app](https://railway.app)
+2. Click "Start a New Project" → "Deploy from GitHub repo"
+3. Select repository, configure:
+   - Root Directory: `apps/api`
    - Build Command: `npm install && npm run build`
    - Start Command: `npm run start:prod`
-   - Plan: Free
-5. Add environment variables
-6. Deploy!
+4. Add environment variables (same as above but PORT=3001)
+5. Generate domain in Settings
+6. Railway includes $5/month free credit
 
 </details>
 
@@ -228,7 +244,7 @@ Connection string: postgresql://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:54
 ### Step 3.3: Configure Webhooks
 
 1. **Developers → Webhooks → Add endpoint**
-2. Endpoint URL: `https://your-api.up.railway.app/webhooks/stripe`
+2. Endpoint URL: `https://kitchentory-api.onrender.com/webhooks/stripe`
 3. Select events to listen to:
    - `customer.subscription.created`
    - `customer.subscription.updated`
@@ -240,7 +256,7 @@ Connection string: postgresql://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:54
 
 ### Step 3.4: Update API with Stripe Keys
 
-Add to Railway environment variables:
+Add to Render environment variables (Settings → Environment):
 ```env
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_PUBLISHABLE_KEY=pk_live_...
@@ -267,7 +283,7 @@ STRIPE_PREMIUM_YEARLY_PRICE_ID=price_...
 2. **Create production environment file**:
    ```env
    # API Configuration
-   API_BASE_URL=https://your-app.up.railway.app
+   API_BASE_URL=https://kitchentory-api.onrender.com
 
    # Supabase Configuration
    SUPABASE_URL=https://xxxxx.supabase.co
@@ -508,7 +524,7 @@ export class SubscriptionsService {
 
 ### Launch Day Checklist
 
-- [ ] Set Railway to production mode (remove dev/staging)
+- [ ] Set Render to always-on if needed ($7/mo) or accept 30s cold starts
 - [ ] Switch Stripe from test mode to live mode
 - [ ] Update mobile apps to use production API URL
 - [ ] Submit iOS app for review (takes 1-2 days)
@@ -522,17 +538,30 @@ export class SubscriptionsService {
 
 ## 💰 Expected Costs (Monthly)
 
+### Starting with Free Tiers (No App Stores)
+
 | Service | Plan | Cost |
 |---------|------|------|
 | Supabase | Free tier | $0 (up to 500MB DB) |
-| Railway | Hobby | $5/month |
+| Render | Free tier | $0 (spins down after 15min) |
+| Stripe | Test mode | $0 (until you go live) |
+| **Total** | | **$0/month** |
+
+**Perfect for testing!** Deploy and test with Expo Go before investing in app stores.
+
+### Production Costs (with App Stores)
+
+| Service | Plan | Cost |
+|---------|------|------|
+| Supabase | Free tier | $0 (up to 500MB DB) |
+| Render | Starter (always-on) | $7/month |
 | Stripe | Pay as you go | 2.9% + $0.30 per transaction |
 | Apple Developer | Annual | $99/year ($8.25/month) |
 | Google Play | One-time | $25 (one-time) |
-| **Total Month 1** | | **~$13.25** |
-| **Total Ongoing** | | **~$13.25/month** |
+| **Total Month 1** | | **~$40** (includes Google one-time) |
+| **Total Ongoing** | | **~$15/month** |
 
-**Break-even**: With your pricing ($3.99 Pro, $9.99 Premium), you need just 4 paying customers to cover costs!
+**Break-even**: With your pricing ($3.99 Pro, $9.99 Premium), you need just 2-3 paying customers to cover costs!
 
 ---
 
@@ -545,8 +574,8 @@ supabase projects list
 supabase link --project-ref <correct-ref>
 ```
 
-### Issue: Railway build fails
-**Solution**: Check build logs, ensure package.json scripts are correct:
+### Issue: Render build fails
+**Solution**: Check build logs in Render dashboard, ensure package.json scripts are correct:
 ```json
 {
   "scripts": {
@@ -556,25 +585,30 @@ supabase link --project-ref <correct-ref>
 }
 ```
 
+### Issue: Render says "Deploy failed: No such file or directory"
+**Solution**: Make sure Root Directory is set to `apps/api` in Render settings.
+
 ### Issue: Mobile app can't connect to API
 **Solution**:
 1. Verify API_BASE_URL in .env
-2. Check Railway logs for errors
-3. Test API endpoint directly: `curl https://your-api.com`
+2. Check Render logs (Logs tab in dashboard)
+3. Test API endpoint directly: `curl https://kitchentory-api.onrender.com`
+4. If using free tier, wait 30s for cold start
 
 ### Issue: Stripe webhooks not receiving events
 **Solution**:
-1. Verify webhook URL is correct
-2. Check Railway logs for incoming requests
-3. Test with Stripe CLI: `stripe listen --forward-to localhost:3001/webhooks/stripe`
+1. Verify webhook URL is correct in Stripe dashboard
+2. Check Render logs for incoming requests
+3. Test with Stripe CLI: `stripe listen --forward-to https://kitchentory-api.onrender.com/webhooks/stripe`
 
 ---
 
 ## 📞 Support Resources
 
 - **Supabase Docs**: https://supabase.com/docs
-- **Railway Docs**: https://docs.railway.app
+- **Render Docs**: https://docs.render.com
 - **Stripe Docs**: https://stripe.com/docs
+- **Expo Docs**: https://docs.expo.dev
 - **React Native**: https://reactnative.dev/docs
 - **NestJS**: https://docs.nestjs.com
 
