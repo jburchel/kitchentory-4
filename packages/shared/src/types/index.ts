@@ -168,13 +168,15 @@ export interface RecipeStep {
 
 // API Response Types
 export interface ApiResponse<T> {
+  success: boolean;
   data: T;
   message?: string;
-  status: 'success' | 'error';
+  status?: 'success' | 'error';
 }
 
 export interface PaginatedResponse<T> {
   data: T[];
+  items?: T[]; // Alias for data
   pagination: {
     page: number;
     limit: number;
@@ -184,6 +186,22 @@ export interface PaginatedResponse<T> {
 }
 
 // Auth Types
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  username: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
 export interface LoginResponse {
   user: {
     id: string;
@@ -192,4 +210,141 @@ export interface LoginResponse {
     subscription_tier: SubscriptionTier;
   };
   token: string;
+}
+
+// Product Request DTOs
+export interface CreateProductRequest {
+  name: string;
+  brand?: string;
+  category?: string;
+  default_unit?: string;
+  barcode?: string;
+  image_url?: string;
+}
+
+export interface UpdateProductRequest {
+  name?: string;
+  brand?: string;
+  category?: string;
+  default_unit?: string;
+  barcode?: string;
+  image_url?: string;
+}
+
+export interface ProductSearchQuery {
+  search?: string;
+  category?: string;
+  barcode?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Inventory Request DTOs
+export interface CreateInventoryItemRequest {
+  product_id: string;
+  quantity: number;
+  unit: string;
+  location: string;
+  purchase_date?: Date;
+  expiration_date?: Date;
+}
+
+export interface UpdateInventoryItemRequest {
+  quantity?: number;
+  unit?: string;
+  location?: string;
+  purchase_date?: Date;
+  expiration_date?: Date;
+  opened_date?: Date;
+}
+
+export interface InventoryQuery {
+  location?: string;
+  expiring_soon?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+// Recipe Request DTOs
+export interface RecipeIngredient {
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit: string;
+  optional?: boolean;
+}
+
+export interface CreateRecipeRequest {
+  name: string;
+  description?: string;
+  servings?: number;
+  prep_time?: number;
+  cook_time?: number;
+  difficulty?: string;
+  cuisine?: string;
+  ingredients: RecipeIngredient[];
+  steps: RecipeStep[];
+}
+
+export interface UpdateRecipeRequest {
+  name?: string;
+  description?: string;
+  servings?: number;
+  prep_time?: number;
+  cook_time?: number;
+  difficulty?: string;
+  cuisine?: string;
+  ingredients?: RecipeIngredient[];
+  steps?: RecipeStep[];
+}
+
+export interface RecipeSearchQuery {
+  search?: string;
+  cuisine?: string;
+  difficulty?: string;
+  max_time?: number;
+  available_only?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+// Shopping List Request DTOs
+export interface ShoppingListItem {
+  id: string;
+  shopping_list_id: string;
+  product_id?: string;
+  product_name: string;
+  quantity: number;
+  unit: string;
+  checked: boolean;
+  added_at: Date;
+}
+
+export interface CreateShoppingListRequest {
+  name: string;
+  notes?: string;
+}
+
+export interface UpdateShoppingListRequest {
+  name?: string;
+  notes?: string;
+  completed?: boolean;
+}
+
+export interface AddToShoppingListRequest {
+  product_id?: string;
+  product_name: string;
+  quantity: number;
+  unit: string;
+}
+
+export interface UpdateShoppingListItemRequest {
+  quantity?: number;
+  unit?: string;
+  checked?: boolean;
+}
+
+export interface GenerateShoppingListRequest {
+  recipe_ids?: string[];
+  days?: number;
 }
