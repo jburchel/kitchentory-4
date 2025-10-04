@@ -180,6 +180,7 @@ export interface PaginatedResponse<T> {
   items?: T[]; // Alias for data
   total?: number;
   page?: number;
+  limit?: number;
   pagination: {
     page: number;
     limit: number;
@@ -349,7 +350,7 @@ export interface UpdateShoppingListRequest {
 
 export interface AddToShoppingListRequest {
   product_id?: string;
-  product_name: string;
+  product_name?: string;
   name?: string;
   quantity: number;
   unit: string;
