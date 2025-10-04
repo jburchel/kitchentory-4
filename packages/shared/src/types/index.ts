@@ -179,6 +179,7 @@ export interface PaginatedResponse<T> {
   data: T[];
   items?: T[]; // Alias for data
   total?: number;
+  page?: number;
   pagination: {
     page: number;
     limit: number;
@@ -203,6 +204,7 @@ export interface RegisterRequest {
 export interface AuthResponse {
   user: User;
   access_token: string;
+  refresh_token?: string;
   token?: string;
 }
 
@@ -351,6 +353,7 @@ export interface AddToShoppingListRequest {
   name?: string;
   quantity: number;
   unit: string;
+  notes?: string;
 }
 
 export interface UpdateShoppingListItemRequest {
