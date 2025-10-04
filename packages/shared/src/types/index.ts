@@ -169,14 +169,16 @@ export interface RecipeStep {
 // API Response Types
 export interface ApiResponse<T> {
   success: boolean;
-  data: T;
+  data?: T;
   message?: string;
+  error?: string;
   status?: 'success' | 'error';
 }
 
 export interface PaginatedResponse<T> {
   data: T[];
   items?: T[]; // Alias for data
+  total?: number;
   pagination: {
     page: number;
     limit: number;
@@ -194,12 +196,14 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   username: string;
+  name: string;
   password: string;
 }
 
 export interface AuthResponse {
   user: User;
-  token: string;
+  access_token: string;
+  token?: string;
 }
 
 export interface LoginResponse {
@@ -233,7 +237,9 @@ export interface UpdateProductRequest {
 
 export interface ProductSearchQuery {
   search?: string;
+  q?: string;
   category?: string;
+  category_id?: string;
   barcode?: string;
   page?: number;
   limit?: number;
@@ -256,11 +262,14 @@ export interface UpdateInventoryItemRequest {
   purchase_date?: Date;
   expiration_date?: Date;
   opened_date?: Date;
+  is_consumed?: boolean;
 }
 
 export interface InventoryQuery {
   location?: string;
   expiring_soon?: boolean;
+  consumed?: boolean;
+  expired?: boolean;
   page?: number;
   limit?: number;
 }
@@ -300,9 +309,13 @@ export interface UpdateRecipeRequest {
 
 export interface RecipeSearchQuery {
   search?: string;
+  q?: string;
   cuisine?: string;
   difficulty?: string;
   max_time?: number;
+  prep_time_max?: number;
+  cook_time_max?: number;
+  dietary_tags?: string[];
   available_only?: boolean;
   page?: number;
   limit?: number;
@@ -329,11 +342,13 @@ export interface UpdateShoppingListRequest {
   name?: string;
   notes?: string;
   completed?: boolean;
+  is_active?: boolean;
 }
 
 export interface AddToShoppingListRequest {
   product_id?: string;
   product_name: string;
+  name?: string;
   quantity: number;
   unit: string;
 }
@@ -342,9 +357,11 @@ export interface UpdateShoppingListItemRequest {
   quantity?: number;
   unit?: string;
   checked?: boolean;
+  is_checked?: boolean;
 }
 
 export interface GenerateShoppingListRequest {
   recipe_ids?: string[];
   days?: number;
+  auto_add_expiring?: boolean;
 }
