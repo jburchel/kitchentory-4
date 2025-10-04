@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchentory - Kitchen Inventory Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* Auth Screen */
+        .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .auth-card { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .auth-card h1 { margin-bottom: 30px; color: #333; text-align: center; }
+        .auth-tabs { display: flex; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; }
+        .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+        .auth-tab.active { border-bottom-color: #4CAF50; color: #4CAF50; font-weight: 600; }
+
+        /* App Screen */
+        .app-screen { display: none; }
+        .header { background: #4CAF50; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
+        .header h1 { font-size: 24px; }
+        .header .user-info { margin-top: 10px; font-size: 14px; opacity: 0.9; }
+        .header button { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        .header button:hover { background: rgba(255,255,255,0.3); }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { background: white; padding: 15px 30px; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .tab:hover { background: #e8f5e9; }
+        .tab.active { background: #4CAF50; color: white; }
+
+        .content { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        /* Forms */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        button { background: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-right: 10px; }
+        button:hover { background: #45a049; }
+        button.secondary { background: #2196F3; }
+        button.secondary:hover { background: #0b7dda; }
+        button.danger { background: #f44336; }
+        button.danger:hover { background: #da190b; }
+
+        /* Items List */
+        .items { display: grid; gap: 15px; margin-top: 20px; }
+        .item { background: #f9f9f9; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .item-info h3 { color: #333; margin-bottom: 5px; }
+        .item-info p { color: #666; font-size: 14px; }
+        .item-actions button { padding: 8px 16px; font-size: 14px; margin-left: 5px; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state svg { width: 100px; height: 100px; opacity: 0.3; margin-bottom: 20px; }
+
+        .hidden { display: none !important; }
+        .error { color: #f44336; margin-top: 10px; }
+        .success { color: #4CAF50; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <h1>🍳 Kitchentory</h1>
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
+                <div class="auth-tab" onclick="switchAuthTab('register')">Register</div>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit">Login</button>
+                <div id="loginError" class="error hidden"></div>
+            </form>
+
+            <form id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="registerUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <button type="submit">Register</button>
+                <div id="registerError" class="error hidden"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Screen -->
+    <div id="appScreen" class="app-screen">
+        <div class="container">
+            <div class="header">
+                <h1>🍳 Kitchentory</h1>
+                <div class="user-info">
+                    Welcome, <span id="userName"></span>!
+                </div>
+                <button onclick="logout()">Logout</button>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('inventory')">📦 Inventory</div>
+                <div class="tab" onclick="switchTab('recipes')">🍽️ Recipes</div>
+                <div class="tab" onclick="switchTab('shopping')">🛒 Shopping Lists</div>
+            </div>
+
+            <div class="content">
+                <!-- Inventory Tab -->
+                <div id="inventoryTab">
+                    <h2>My Inventory</h2>
+                    <button onclick="showAddInventoryForm()">+ Add Item</button>
+
+                    <div id="addInventoryForm" class="hidden" style="margin-top: 20px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                        <h3>Add Inventory Item</h3>
+                        <div class="form-group">
+                            <label>Product Name</label>
+                            <input type="text" id="invProductName">
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" id="invQuantity" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit</label>
+                            <input type="text" id="invUnit" value="pcs">
+                        </div>
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input type="text" id="invLocation" placeholder="e.g., Fridge, Pantry">
+                        </div>
+                        <div class="form-group">
+                            <label>Expiry Date (optional)</label>
+                            <input type="date" id="invExpiry">
+                        </div>
+                        <button onclick="addInventoryItem()">Add</button>
+                        <button class="secondary" onclick="hideAddInventoryForm()">Cancel</button>
+                    </div>
+
+                    <div id="inventoryItems" class="items"></div>
+                </div>
+
+                <!-- Recipes Tab -->
+                <div id="recipesTab" class="hidden">
+                    <h2>Recipes</h2>
+                    <button onclick="showAddRecipeForm()">+ Add Recipe</button>
+
+                    <div id="addRecipeForm" class="hidden" style="margin-top: 20px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                        <h3>Add Recipe</h3>
+                        <div class="form-group">
+                            <label>Recipe Name</label>
+                            <input type="text" id="recipeName">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="recipeDescription" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Instructions</label>
+                            <textarea id="recipeInstructions" rows="5"></textarea>
+                        </div>
+                        <button onclick="addRecipe()">Add</button>
+                        <button class="secondary" onclick="hideAddRecipeForm()">Cancel</button>
+                    </div>
+
+                    <div id="recipeItems" class="items"></div>
+                </div>
+
+                <!-- Shopping Tab -->
+                <div id="shoppingTab" class="hidden">
+                    <h2>Shopping Lists</h2>
+                    <button onclick="showAddShoppingListForm()">+ New List</button>
+
+                    <div id="addShoppingListForm" class="hidden" style="margin-top: 20px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                        <h3>New Shopping List</h3>
+                        <div class="form-group">
+                            <label>List Name</label>
+                            <input type="text" id="listName" placeholder="e.g., Weekly Groceries">
+                        </div>
+                        <button onclick="addShoppingList()">Create</button>
+                        <button class="secondary" onclick="hideAddShoppingListForm()">Cancel</button>
+                    </div>
+
+                    <div id="shoppingItems" class="items"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://kitchentory-4-1.onrender.com';
+        let token = null;
+        let user = null;
+
+        // Auth Functions
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tab === 'login') {
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('registerForm').classList.add('hidden');
+            } else {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    token = data.data.access_token;
+                    user = data.data.user;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    showApp();
+                } else {
+                    document.getElementById('loginError').textContent = data.message || 'Login failed';
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            } catch (error) {
+                document.getElementById('loginError').textContent = 'Network error';
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    token = data.data.access_token;
+                    user = data.data.user;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    showApp();
+                } else {
+                    document.getElementById('registerError').textContent = data.message || 'Registration failed';
+                    document.getElementById('registerError').classList.remove('hidden');
+                }
+            } catch (error) {
+                document.getElementById('registerError').textContent = 'Network error';
+                document.getElementById('registerError').classList.remove('hidden');
+            }
+        });
+
+        function showApp() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+            document.getElementById('userName').textContent = user.name;
+            loadInventory();
+        }
+
+        function logout() {
+            token = null;
+            user = null;
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('appScreen').classList.add('hidden');
+        }
+
+        // Tab Switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('inventoryTab').classList.add('hidden');
+            document.getElementById('recipesTab').classList.add('hidden');
+            document.getElementById('shoppingTab').classList.add('hidden');
+
+            if (tab === 'inventory') {
+                document.getElementById('inventoryTab').classList.remove('hidden');
+                loadInventory();
+            } else if (tab === 'recipes') {
+                document.getElementById('recipesTab').classList.remove('hidden');
+                loadRecipes();
+            } else if (tab === 'shopping') {
+                document.getElementById('shoppingTab').classList.remove('hidden');
+                loadShoppingLists();
+            }
+        }
+
+        // Inventory Functions
+        function showAddInventoryForm() {
+            document.getElementById('addInventoryForm').classList.remove('hidden');
+        }
+
+        function hideAddInventoryForm() {
+            document.getElementById('addInventoryForm').classList.add('hidden');
+        }
+
+        async function loadInventory() {
+            try {
+                const response = await fetch(`${API_URL}/inventory`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                const container = document.getElementById('inventoryItems');
+
+                if (response.status === 500 || data.statusCode === 500) {
+                    container.innerHTML = '<div class="empty-state"><p>⚠️ API Error. The inventory endpoint needs to be fixed.</p><p style="color: #666; margin-top: 10px;">Error: ' + (data.message || 'Internal server error') + '</p></div>';
+                    return;
+                }
+
+                if (!data.data || data.data.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>No inventory items yet. Add your first item!</p></div>';
+                } else {
+                    container.innerHTML = data.data.map(item => `
+                        <div class="item">
+                            <div class="item-info">
+                                <h3>${item.product_name || 'Unnamed'}</h3>
+                                <p>${item.quantity} ${item.unit} • ${item.location || 'No location'}</p>
+                            </div>
+                            <div class="item-actions">
+                                <button class="danger" onclick="deleteInventory('${item.id}')">Delete</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                document.getElementById('inventoryItems').innerHTML = '<div class="empty-state"><p>❌ Failed to load inventory</p><p style="color: #666; margin-top: 10px;">' + error.message + '</p></div>';
+            }
+        }
+
+        async function addInventoryItem() {
+            const productName = document.getElementById('invProductName').value;
+            const quantity = parseFloat(document.getElementById('invQuantity').value);
+            const unit = document.getElementById('invUnit').value;
+            const location = document.getElementById('invLocation').value;
+            const expiry = document.getElementById('invExpiry').value;
+
+            await fetch(`${API_URL}/inventory`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    product_name: productName,
+                    quantity,
+                    unit,
+                    location,
+                    expiry_date: expiry || null
+                })
+            });
+
+            hideAddInventoryForm();
+            loadInventory();
+        }
+
+        async function deleteInventory(id) {
+            await fetch(`${API_URL}/inventory/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            loadInventory();
+        }
+
+        // Recipe Functions
+        function showAddRecipeForm() {
+            document.getElementById('addRecipeForm').classList.remove('hidden');
+        }
+
+        function hideAddRecipeForm() {
+            document.getElementById('addRecipeForm').classList.add('hidden');
+        }
+
+        async function loadRecipes() {
+            const response = await fetch(`${API_URL}/recipes`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            const container = document.getElementById('recipeItems');
+            if (!data.data || data.data.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No recipes yet. Add your first recipe!</p></div>';
+            } else {
+                container.innerHTML = data.data.map(item => `
+                    <div class="item">
+                        <div class="item-info">
+                            <h3>${item.name}</h3>
+                            <p>${item.description || 'No description'}</p>
+                        </div>
+                        <div class="item-actions">
+                            <button class="danger" onclick="deleteRecipe('${item.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function addRecipe() {
+            const name = document.getElementById('recipeName').value;
+            const description = document.getElementById('recipeDescription').value;
+            const instructions = document.getElementById('recipeInstructions').value;
+
+            await fetch(`${API_URL}/recipes`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, description, instructions })
+            });
+
+            hideAddRecipeForm();
+            loadRecipes();
+        }
+
+        async function deleteRecipe(id) {
+            await fetch(`${API_URL}/recipes/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            loadRecipes();
+        }
+
+        // Shopping List Functions
+        function showAddShoppingListForm() {
+            document.getElementById('addShoppingListForm').classList.remove('hidden');
+        }
+
+        function hideAddShoppingListForm() {
+            document.getElementById('addShoppingListForm').classList.add('hidden');
+        }
+
+        async function loadShoppingLists() {
+            const response = await fetch(`${API_URL}/shopping/lists`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            const container = document.getElementById('shoppingItems');
+            if (!data.data || data.data.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No shopping lists yet. Create your first list!</p></div>';
+            } else {
+                container.innerHTML = data.data.map(item => `
+                    <div class="item">
+                        <div class="item-info">
+                            <h3>${item.name}</h3>
+                            <p>Created ${new Date(item.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div class="item-actions">
+                            <button class="danger" onclick="deleteShoppingList('${item.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function addShoppingList() {
+            const name = document.getElementById('listName').value;
+
+            await fetch(`${API_URL}/shopping/lists`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name })
+            });
+
+            hideAddShoppingListForm();
+            loadShoppingLists();
+        }
+
+        async function deleteShoppingList(id) {
+            await fetch(`${API_URL}/shopping/lists/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            loadShoppingLists();
+        }
+
+        // Check for existing session
+        window.onload = () => {
+            const savedToken = localStorage.getItem('token');
+            const savedUser = localStorage.getItem('user');
+
+            if (savedToken && savedUser) {
+                token = savedToken;
+                user = JSON.parse(savedUser);
+                showApp();
+            }
+        };
+    </script>
+</body>
+</html>
