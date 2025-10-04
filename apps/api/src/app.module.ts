@@ -15,6 +15,7 @@ import supabaseConfig from './config/supabase.config';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [supabaseConfig],
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
     }),
     SupabaseModule,
     AuthModule,
