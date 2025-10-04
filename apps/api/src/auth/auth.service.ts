@@ -12,10 +12,11 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterRequest): Promise<AuthResponse> {
-    const supabase = this.supabaseService.getClient();
+    const anonClient = this.supabaseService.getAnonClient();
+    const serviceClient = this.supabaseService.getClient();
 
-    // Register user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Register user with Supabase Auth using anon client
+    const { data: authData, error: authError } = await anonClient.auth.signUp({
       email: registerDto.email,
       password: registerDto.password,
     });
@@ -24,8 +25,8 @@ export class AuthService {
       throw new UnauthorizedException(authError.message);
     }
 
-    // Create user profile
-    const { data: userData, error: userError } = await supabase
+    // Create user profile using service client
+    const { data: userData, error: userError } = await serviceClient
       .from('users')
       .insert({
         id: authData.user.id,
@@ -38,7 +39,7 @@ export class AuthService {
 
     if (userError) {
       // Cleanup auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      await serviceClient.auth.admin.deleteUser(authData.user.id);
       throw new UnauthorizedException('Failed to create user profile');
     }
 
@@ -53,9 +54,10 @@ export class AuthService {
   }
 
   async login(loginDto: LoginRequest): Promise<AuthResponse> {
-    const supabase = this.supabaseService.getClient();
+    const anonClient = this.supabaseService.getAnonClient();
+    const serviceClient = this.supabaseService.getClient();
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await anonClient.auth.signInWithPassword({
       email: loginDto.email,
       password: loginDto.password,
     });
@@ -65,7 +67,7 @@ export class AuthService {
     }
 
     // Get user profile
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await serviceClient
       .from('users')
       .select('*')
       .eq('id', authData.user.id)
