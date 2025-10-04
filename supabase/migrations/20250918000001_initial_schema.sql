@@ -9,7 +9,7 @@ CREATE TYPE subscription_tier AS ENUM ('free', 'pro', 'premium');
 
 -- Users table (extends Supabase auth.users)
 CREATE TABLE public.users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT UNIQUE NOT NULL,
     username TEXT UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE public.users (
 
 -- Households table
 CREATE TABLE public.households (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     created_by UUID NOT NULL REFERENCES public.users(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE public.households (
 
 -- Household members junction table
 CREATE TABLE public.household_members (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     household_id UUID NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     role TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'member', 'viewer')),
@@ -58,7 +58,7 @@ CREATE TABLE public.household_members (
 
 -- Subscriptions table
 CREATE TABLE public.subscriptions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     tier TEXT NOT NULL CHECK (tier IN ('free', 'pro', 'premium')),
     status TEXT NOT NULL CHECK (status IN ('active', 'cancelled', 'past_due', 'trialing')),
@@ -80,7 +80,7 @@ CREATE TABLE public.subscriptions (
 
 -- Products table (master catalog)
 CREATE TABLE public.products (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     brand TEXT,
     category TEXT NOT NULL CHECK (category IN (
@@ -103,7 +103,7 @@ CREATE TABLE public.products (
 
 -- Product barcodes table
 CREATE TABLE public.product_barcodes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
     barcode TEXT NOT NULL,
     barcode_type TEXT NOT NULL CHECK (barcode_type IN ('upc_a', 'upc_e', 'ean_13', 'ean_8')),
@@ -114,7 +114,7 @@ CREATE TABLE public.product_barcodes (
 
 -- Inventory items table
 CREATE TABLE public.inventory_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     household_id UUID NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES public.products(id),
     added_by UUID NOT NULL REFERENCES public.users(id),
@@ -134,7 +134,7 @@ CREATE TABLE public.inventory_items (
 
 -- Recipes table
 CREATE TABLE public.recipes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_by UUID REFERENCES public.users(id),
     name TEXT NOT NULL,
     description TEXT,
@@ -160,7 +160,7 @@ CREATE TABLE public.recipes (
 
 -- Recipe ingredients table
 CREATE TABLE public.recipe_ingredients (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     recipe_id UUID NOT NULL REFERENCES public.recipes(id) ON DELETE CASCADE,
     product_id UUID REFERENCES public.products(id),
     name TEXT NOT NULL,
@@ -175,7 +175,7 @@ CREATE TABLE public.recipe_ingredients (
 
 -- Shopping lists table
 CREATE TABLE public.shopping_lists (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     household_id UUID NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
     created_by UUID NOT NULL REFERENCES public.users(id),
     name TEXT,
@@ -190,7 +190,7 @@ CREATE TABLE public.shopping_lists (
 
 -- Shopping list items table
 CREATE TABLE public.shopping_list_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     shopping_list_id UUID NOT NULL REFERENCES public.shopping_lists(id) ON DELETE CASCADE,
     product_id UUID REFERENCES public.products(id),
     name TEXT NOT NULL,

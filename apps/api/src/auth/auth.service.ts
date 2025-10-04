@@ -30,6 +30,7 @@ export class AuthService {
       .insert({
         id: authData.user.id,
         email: registerDto.email,
+        username: registerDto.username,
         name: registerDto.name,
       })
       .select()
