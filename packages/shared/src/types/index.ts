@@ -176,13 +176,13 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  data?: T[];
   items?: T[]; // Alias for data
   total?: number;
   page?: number;
   limit?: number;
   hasMore?: boolean;
-  pagination: {
+  pagination?: {
     page: number;
     limit: number;
     total: number;
