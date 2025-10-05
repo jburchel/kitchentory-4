@@ -44,11 +44,19 @@ export class InventoryController {
     @Request() req,
     @Query() query: InventoryQuery,
   ): Promise<ApiResponse<PaginatedResponse<InventoryItem>>> {
-    const items = await this.inventoryService.findAll(req.user.id, query);
-    return {
-      success: true,
-      data: items,
-    };
+    try {
+      console.log('Inventory GET - req.user:', req.user);
+      console.log('Inventory GET - req.user.id:', req.user?.id);
+      const items = await this.inventoryService.findAll(req.user.id, query);
+      console.log('Inventory GET - items:', items);
+      return {
+        success: true,
+        data: items,
+      };
+    } catch (error) {
+      console.error('Inventory GET ERROR:', error);
+      throw error;
+    }
   }
 
   @Get('expiring')
